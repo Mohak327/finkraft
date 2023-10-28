@@ -1,0 +1,153 @@
+App.js
+import React, { useEffect, useState } from 'react';
+import Login from './components/Login';
+import Dashboard from './components/Dashboard';
+import Navbar from './components/Navbar';
+import SideNavbar from './components/SideNavbar';
+import {userCredentials} from './data/userCredentials';
+import { hashPassword, comparePasswords } from './data/passwordUtils';
+
+const App = () => {
+  const [loggedIn, setLoggedIn] = useState(
+    localStorage.getItem('isLoggedIn') === 'true'
+  );
+  const [userRole, setUserRole] = useState(
+    localStorage.getItem('userRole') || ''
+  );
+  const [isSideNavOpen, setIsSideNavOpen] = useState(false);
+
+  // Hash passwords when the component mounts
+  useEffect(() => {
+    const fetchHashedCredentials = async () => {
+      const hashedCreds = await Promise.all(userCredentials.map(async (user) => {
+        const hashedPassword = await hashPassword(user.password);
+        console.log('password', user.password, hashedPassword);
+        return { username: user.username, password: hashedPassword };
+      }));
+  
+      // Store hashed credentials in local storage
+      localStorage.setItem('hashedCredentials', JSON.stringify(hashedCreds));
+    };
+  
+    fetchHashedCredentials();
+  }, []);
+
+  const handleLogin = async ({ username, password }) => {
+    const hashedCredentials = JSON.parse(
+      localStorage.getItem('hashedCredentials')
+    );
+
+    const user = hashedCredentials.find(
+      (user) => user.username === username
+    );
+
+    console.log('check_password', password, user.password)
+
+    if (user) {
+      const passwordMatch = await comparePasswords(
+        password,
+        user.password
+      );
+
+      if (passwordMatch) {
+        // Store a token or session identifier in local storage
+        localStorage.setItem('isLoggedIn', 'true');
+        localStorage.setItem('userRole', user.active_module);
+
+        setLoggedIn(true);
+        setUserRole(user.active_module);
+      } else {
+        alert('Invalid credentials. Please try again.');
+      }
+    } else {
+      alert('User not found. Please check your username.');
+    }
+  };
+
+  const toggleDrawer = (open) => (event) => {
+    if (
+      event.type === 'keydown' &&
+      (event.key === 'Tab' || event.key === 'Shift')
+    ) {
+      return;
+    }
+    setIsSideNavOpen(open);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('userRole');
+    setLoggedIn(false);
+    setUserRole('');
+  };
+
+  return (
+    <div>
+      <Navbar loggedIn={loggedIn} toggleDrawer={toggleDrawer} />
+      <SideNavbar
+        isOpen={isSideNavOpen}
+        toggleDrawer={toggleDrawer}
+        userRole={userRole}
+        handleLogout={handleLogout}
+      />
+      <div>
+        {loggedIn ? (
+          <Dashboard userRole={userRole} />
+        ) : (
+          <Login handleLogin={handleLogin} />
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default App;
+
+Login.js
+import React, { useState } from 'react';
+import { hashPassword, comparePasswords } from '../data/passwordUtils';
+
+const Login = ({ handleLogin }) => {
+  const [formData, setFormData] = useState({ username: '', password: '' });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    const hashedPassword = await hashPassword(formData.password);
+
+    handleLogin({
+      username: formData.username,
+      password: hashedPassword,
+    });
+  };
+
+  return (
+    <div>
+      <h2>Login</h2>
+      <form onSubmit={handleSubmit}>
+        <input
+          type="text"
+          name="username"
+          placeholder="Username"
+          value={formData.username}
+          onChange={handleChange}
+        />
+        <input
+          type="password"
+          name="password"
+          placeholder="Password"
+          value={formData.password}
+          onChange={handleChange}
+        />
+        <button type="submit">Login</button>
+      </form>
+    </div>
+  );
+};
+
+export default Login;
