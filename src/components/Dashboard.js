@@ -8,9 +8,7 @@ const Dashboard = ({ userRole }) => {
         Welcome to Dashboard
       </Typography>
       <Typography variant="body1">
-        {userRole === 'admin'
-          ? 'You have admin privileges.'
-          : 'You have regular user privileges.'}
+        You have {userRole} privileges.
       </Typography>
     </div>
   );

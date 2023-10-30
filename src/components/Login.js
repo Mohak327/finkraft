@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { Button, TextField, Container, Box } from '@mui/material';
 import { userCredentials } from '../data/userCredentials';
+import { useNavigate } from 'react-router-dom';
 
 const Login = ({ handleLogin }) => {
+  const navigate = useNavigate(); 
   const [formData, setFormData] = useState({ username: '', password: '' });
   const [errors, setErrors] = useState({ username: '', password: '' });
 
@@ -41,6 +43,7 @@ const Login = ({ handleLogin }) => {
 
       if (user) {
         handleLogin(formData);
+        navigate('/dashboard');
       } else {
         newErrors.username = 'Invalid username or password';
         newErrors.password = 'Invalid username or password';

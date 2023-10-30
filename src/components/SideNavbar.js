@@ -6,9 +6,18 @@ const SideNavbar = ({ isOpen, toggleDrawer, userRole, handleLogout }) => {
   const { menuItems, userRoles } = config;
 
   const accessibleModules = userRoles[userRole]?.accessibleModules || [];
+  const drawerWidth = '250px';
 
   return (
-    <Drawer open={isOpen} onClose={toggleDrawer(false)}>
+    <Drawer id='drawer' open={isOpen} onClose={toggleDrawer(false)} 
+    sx={{
+      width: drawerWidth,
+      flexShrink: 0,
+      '& .MuiDrawer-paper': {
+        width: drawerWidth,
+        boxSizing: 'border-box',
+      },
+    }}>
       <List>
         {menuItems.map((item, index) => {
           if (accessibleModules.includes(item.module)) {
